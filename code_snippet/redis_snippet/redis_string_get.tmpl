@@ -1,0 +1,22 @@
+func (d *Dao) Get(ctx context.Context, keyArgs string) (*ObjectType) {
+	var obj ObjectType
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+
+	b, err := d.rds.Get(ctx, key)
+	if err != nil {
+		logging.Errorf("redis cmd fail|err=%v", err)
+		return nil
+	}
+	if len(b) == 0 {
+		logging.Errorf("no bytes")
+		return nil
+	}
+
+	err = json.Unmarshal(b, &obj)
+	if err!=nil {
+		logging.Errorf("json.Marshal fail|err=%v", err)
+		return nil
+	}
+	return &obj
+}
+

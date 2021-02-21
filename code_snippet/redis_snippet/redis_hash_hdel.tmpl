@@ -1,0 +1,5 @@
+func (d *Dao) HDel(ctx context.Context, keyArgs string, field string) (delN int) {
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+	delN, _ = d.rds.HDel(ctx, key, field)
+	return delN
+}

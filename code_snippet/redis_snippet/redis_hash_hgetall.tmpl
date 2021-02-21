@@ -1,0 +1,22 @@
+func (d *Dao) HGetAll(ctx context.Context, keyArgs string) (retMap map[fieldType]*model_redis.ObjectType) {
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+	retMap = make(map[fieldType]*model_redis.ObjectType)
+
+	bb, err := d.rds.HGetAll(ctx, key)
+	if err != nil {
+		logging.Errorf("redis cmd fail|err=%v", err)
+		return nil
+	}
+
+	for _, b := range bb {
+		var obj model_redis.ObjectType
+		err = json.Unmarshal([]byte(b), &obj)
+		if err != nil {
+			logging.Errorf("json.Unmarshal fail|err=%v", err)
+			return nil
+		}
+		retMap[obj.FieldName] = &obj
+	}
+
+	return retMap
+}

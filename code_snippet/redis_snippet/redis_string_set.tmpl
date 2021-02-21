@@ -1,0 +1,13 @@
+func (d *Dao) Set(ctx context.Context, keyArgs string, obj ObjectType) error {
+	var obj ObjectType
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+
+	b, err := json.Marshal(obj)
+	if err != nil {
+		logging.Errorf("json.Marshal fail|err=%v",err)
+		return err
+	}
+
+	_, err = d.rds.Set(ctx, key, b)
+	return err
+}

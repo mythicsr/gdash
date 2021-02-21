@@ -1,0 +1,81 @@
+package dao
+
+import (
+	"code.inke.cn/BackendPlatform/golang/logging"
+	"code.inke.cn/gz/server/sevenseven/sevenseven.common.api/define"
+	"code.inke.cn/gz/server/sevenseven/sevenseven.common.api/testmain/model/mysql_aaa"
+	"context"
+	"fmt"
+)
+
+func (d *Dao) AAAInitTable(ctx context.Context) {
+	_ = d.AAACreateTable(ctx)
+}
+
+func (d *Dao) AAACreateTable(ctx context.Context) error {
+	sql := "CREATE TABLE `aaa` (\n  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',\n  `uid` bigint(20) NOT NULL COMMENT '用户id',\n  `info` varchar(255) NOT NULL COMMENT '用户信息',\n  `created_at` datetime DEFAULT NULL,\n  `updated_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+	err := d.ssDB.Master(ctx).Exec(sql).Error
+	if err != nil {
+		logging.Errorf("create table fail|err=%v", err)
+	}
+	return nil
+}
+
+func (d *Dao) AAACreateOne(ctx context.Context, row *mysql_aaa.AAA) *mysql_aaa.AAA {
+	tbName := mysql_aaa.GetCurrentTableName()
+	err := d.ssDB.Master(ctx).Table(tbName).Create(row).Error
+	if err != nil {
+		logging.Errorf("mysql fail|err=%v", err)
+	}
+	return row
+}
+
+func (d *Dao) AAAQueryOne(ctx context.Context, id int64) *mysql_aaa.AAA {
+	var rows []mysql_aaa.AAA
+	tbName := mysql_aaa.GetCurrentTableName()
+	sql := fmt.Sprintf("SELECT * FROM `%s` WHERE id=%d", tbName, id)
+
+	err := d.ssDB.Master(ctx).Table(tbName).Raw(sql).Find(&rows).Error
+	if err != nil {
+		logging.Errorf("mysql fail|err=%v", err)
+		return nil
+	}
+	if len(rows) > 0 {
+		return &rows[0]
+	}
+	return nil
+}
+
+func (d *Dao) AAAQueryMany(ctx context.Context) []mysql_aaa.AAA {
+	rows := make([]mysql_aaa.AAA, 0)
+	tbName := mysql_aaa.GetCurrentTableName()
+	sql := fmt.Sprintf("select * from `%s` where uid>0", tbName)
+
+	err := d.ssDB.Master(ctx).Table(tbName).Raw(sql).Find(&rows).Error
+	if err != nil {
+		logging.Errorf("mysql fail|err=%v", err)
+	}
+
+	return rows
+}
+
+// 更新某一列，零值不更新
+func (d *Dao) AAAUpdateStatus(ctx context.Context, status int) error {
+	tbName := mysql_aaa.GetCurrentTableName()
+	sql := fmt.Sprintf("UPDATE `%s` SET status=%d", tbName, status)
+	err := d.ssDB.Master(ctx).Table(tbName).Update(sql).Error
+	return err
+}
+
+// 更新所有字段，包括零值
+func (d *Dao) AAASave(ctx context.Context, row *mysql_aaa.AAA) (*mysql_aaa.AAA, error) {
+	tbName := mysql_aaa.GetCurrentTableName()
+	rt := d.ssDB.Master(ctx).Table(tbName).Where("updated_at=?", row.UpdatedAt).Save(row)
+	err := rt.Error
+
+	if rt.RowsAffected == 0 {
+		return nil, define.ErrUpdatedByOther
+	}
+
+	return row, err
+}

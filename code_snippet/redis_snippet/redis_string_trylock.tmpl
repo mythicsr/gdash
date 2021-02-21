@@ -1,0 +1,5 @@
+func (d *Dao) TryLock(ctx context.Context, keyArgs string, tryDura, expireDura time.Duration) (uuid string, err error) {
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+	uuid, err = d.rds.TryLock(ctx, key, tryDura, expireDura)
+	return uuid, err
+}

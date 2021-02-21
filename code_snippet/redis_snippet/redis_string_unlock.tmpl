@@ -1,0 +1,18 @@
+
+func (d *Dao) UnLock(ctx context.Context, keyArgs string, uuid string) (delN int) {
+	//todo: Codis 暂未支持 eval
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+
+	b, err := d.rds.Get(ctx, key)
+	if err != nil {
+		logging.Errorf("UnLock fail|err=%v", err)
+		return 0
+	}
+	_uuid := string(b)
+
+	if _uuid == uuid {
+		delN, _ = d.rds.Del(ctx, key)
+		return delN
+	}
+	return 0
+}

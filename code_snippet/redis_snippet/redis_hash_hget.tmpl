@@ -1,0 +1,18 @@
+func (d *Dao) HGet(ctx context.Context, keyArgs string, hashField string) *model_redis.ObjectType {
+	var obj model_redis.ObjectType
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+
+	b, err := d.rds.HGet(ctx, key, hashField)
+	if err != nil {
+		logging.Errorf("redis cmd fail|err=%v", err)
+		return nil
+	}
+
+	err = json.Unmarshal([]byte(b), &obj)
+	if err != nil {
+		logging.Errorf("json.Unmarshal fail|err=%v", err)
+		return nil
+	}
+
+	return &obj
+}

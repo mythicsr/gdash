@@ -1,0 +1,6 @@
+
+func (d *Dao) Lock(ctx context.Context, keyArgs string, expireDura time.Duration) (uuid string, err error) {
+	key := fmt.Sprintf(RedisKeyPattern, keyArgs)
+	uuid, err = d.rds.Lock(ctx, key, expireDura)
+	return uuid, err
+}
